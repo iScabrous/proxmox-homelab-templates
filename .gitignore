@@ -1,0 +1,43 @@
+# Global Git ignore rules for homelab templates
+
+# Secrets and environment files
+.env
+.env.local
+.env.*
+!.env.example
+*.env
+*.key
+*.pem
+*.cert
+*.crt
+id_rsa*
+*.secret
+rclone.conf
+.rclone.conf
+
+# Runtime data volumes & persistent mounts
+data/
+storage/
+media/
+backups/
+export/
+consume/
+redisdata/
+pgdata/
+work/
+conf/
+*.log
+
+# Database dumps & archive artifacts
+*.sql
+*.sql.gz
+*.tar
+*.tar.gz
+
+# OS & Editor artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*~

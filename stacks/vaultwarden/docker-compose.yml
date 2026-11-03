@@ -1,0 +1,19 @@
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: unless-stopped
+    environment:
+      - SIGNUPS_ALLOWED=${SIGNUPS_ALLOWED:-false}
+      - DOMAIN=https://${VAULTWARDEN_DOMAIN}
+      - ADMIN_TOKEN=${ADMIN_TOKEN}
+    volumes:
+      - ./data:/data
+    networks:
+      - vaultwarden_net
+    ports:
+      - "127.0.0.1:${HOST_PORT:-8080}:80"
+
+networks:
+  vaultwarden_net:
+    driver: bridge

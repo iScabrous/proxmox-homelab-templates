@@ -1,0 +1,93 @@
+services:
+  webserver:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    container_name: paperless_webserver
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
+      gotenberg:
+        condition: service_started
+      tika:
+        condition: service_started
+    ports:
+      - "127.0.0.1:${PAPERLESS_PORT:-8000}:8000"
+    environment:
+      USERMAP_UID: ${PUID:-1000}
+      USERMAP_GID: ${PGID:-1000}
+      PAPERLESS_REDIS: redis://broker:6379
+      PAPERLESS_DBENGINE: postgresql
+      PAPERLESS_DBHOST: db
+      PAPERLESS_DBNAME: ${POSTGRES_DB:-paperless}
+      PAPERLESS_DBUSER: ${POSTGRES_USER:-paperless}
+      PAPERLESS_DBPASS: ${POSTGRES_PASSWORD:?Error: POSTGRES_PASSWORD must be configured in .env}
+      PAPERLESS_URL: https://${PAPERLESS_DOMAIN:-paperless.example.com}
+      PAPERLESS_SECRET_KEY: ${PAPERLESS_SECRET_KEY:?Error: PAPERLESS_SECRET_KEY must be configured in .env}
+      PAPERLESS_TIME_ZONE: ${TIME_ZONE:-Europe/Berlin}
+      PAPERLESS_OCR_LANGUAGE: ${OCR_LANG:-deu+eng}
+      PAPERLESS_TIKA_ENABLED: 1
+      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
+      PAPERLESS_TIKA_ENDPOINT: http://tika:9998
+    volumes:
+      - ./data:/usr/src/paperless/data
+      - ./media:/usr/src/paperless/media
+      - ./export:/usr/src/paperless/export
+      - ./consume:/usr/src/paperless/consume
+    networks:
+      - paperless_net
+
+  broker:
+    image: docker.io/library/redis:7-alpine
+    container_name: paperless_broker
+    restart: unless-stopped
+    volumes:
+      - ./redisdata:/data
+    networks:
+      - paperless_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db:
+    image: docker.io/library/postgres:16-alpine
+    container_name: paperless_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-paperless}
+      POSTGRES_USER: ${POSTGRES_USER:-paperless}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Error: POSTGRES_PASSWORD must be configured in .env}
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    networks:
+      - paperless_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-paperless} -d ${POSTGRES_DB:-paperless}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  gotenberg:
+    image: docker.io/gotenberg/gotenberg:8
+    container_name: paperless_gotenberg
+    restart: unless-stopped
+    command:
+      - "gotenberg"
+      - "--chromium-disable-javascript=true"
+      - "--chromium-allow-list=file:///tmp/.*"
+    networks:
+      - paperless_net
+
+  tika:
+    image: docker.io/apache/tika:latest
+    container_name: paperless_tika
+    restart: unless-stopped
+    networks:
+      - paperless_net
+
+networks:
+  paperless_net:
+    driver: bridge
