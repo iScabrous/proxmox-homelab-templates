@@ -1,0 +1,19 @@
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./data:/app/data
+    ports:
+      # Bind to loopback if using reverse proxy (e.g., Nginx, NPM, Cloudflare Tunnel)
+      - "${KUMA_BIND_IP:-127.0.0.1}:${KUMA_PORT:-3001}:3001"
+    environment:
+      - TZ=${TZ:-Europe/Berlin}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

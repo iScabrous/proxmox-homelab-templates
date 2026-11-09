@@ -16,19 +16,19 @@ Designed with security, reproducible configurations, zero open router ports (via
                                          ▼
                             ┌────────────────────────┐
                             │ Cloudflare Tunnel /    │
-                            │ Reverse Proxy          │
+                            │ Reverse Proxy (NPM)    │
                             └───────────┬────────────┘
                                         │
                  ┌──────────────────────┼──────────────────────┐
                  ▼                      ▼                      ▼
       ┌────────────────────┐ ┌────────────────────┐ ┌────────────────────┐
-      │  LXC: Productivity │ │  LXC: Security     │ │   LXC: DNS / Net   │
+      │  LXC: Productivity │ │  LXC: Sec & Mon    │ │ LXC: Native Core   │
       │  • Paperless-ngx   │ │  • Vaultwarden     │ │  • AdGuard Home    │
-      │  • PostgreSQL      │ │  • SQLite          │ │  • DNS Sinkhole    │
-      │  • Redis / Broker  │ │                    │ │                    │
+      │  • PostgreSQL      │ │  • Uptime Kuma     │ │  • Native Systemd  │
+      │  • Redis / Tika    │ │  (Docker Compose)  │ │  • Direct Port 53  │
       └──────────┬─────────┘ └──────────┬─────────┘ └──────────┬─────────┘
                  │                      │                      │
-                 └──────────────────────┴──────────────────────┘
+                 └──────────────────────┼──────────────────────┘
                                         │
                                 (Nightly Rclone)
                                         ▼
@@ -41,14 +41,22 @@ Designed with security, reproducible configurations, zero open router ports (via
 
 ## 📦 Included Services
 
+### 🐳 Docker Compose Stacks (Multi-Container Services)
 | Directory | Service Stack | Primary Role | Recommended Base |
 | :--- | :--- | :--- | :--- |
 | `stacks/vaultwarden/` | Vaultwarden (SQLite) | Password management (Bitwarden-compatible) | Debian / Alpine LXC |
 | `stacks/paperless-ngx/` | Paperless-ngx + Tika + Gotenberg | Document management & OCR ingestion | Ubuntu LXC |
-| `stacks/adguard-home/` | AdGuard Home | Network-wide DNS sinkhole & ad-blocking | Alpine LXC |
+| `stacks/uptime-kuma/` | Uptime Kuma | Service uptime & latency monitoring | Debian LXC |
+
+### 🛡️ Native Proxmox LXC Services (Bare-Metal Efficiency)
+| Directory | Service Stack | Primary Role | Recommended Base |
+| :--- | :--- | :--- | :--- |
+| `native-lxc/adguard-home/` | AdGuard Home (Native Binary) | Low-latency DNS sinkhole & ad-blocking | Debian / Alpine LXC |
 | `automation/backup/` | Rclone + Bash backup scripts | Encrypted offsite volume & database backups | Host cron / Systemd |
 
-> **Roadmap / Planned:** Additional stacks such as *Immich* (Media & Machine Learning) and *Authentik* (SSO/IdP) are planned for upcoming releases.
+> **Architectural Decision (Docker vs. Native LXC):**
+> * Applications with multi-service dependencies, database engines, or complex runtimes (Paperless-ngx, Vaultwarden, Uptime Kuma) run inside **Docker Compose** containers for strict process isolation and reproducible upgrades.
+> * Core network infrastructure (AdGuard Home) runs as a **Native Systemd Service** directly inside an unprivileged LXC to eliminate Docker bridge NAT latency, avoid `docker-proxy` overhead, and cleanly bind port 53.
 
 ---
 

@@ -1,0 +1,57 @@
+# AdGuard Home Example Configuration
+# Reference template for production-hardened unprivileged LXC deployment
+
+bind_host: 0.0.0.0
+bind_port: 80
+auth_attempts: 5
+block_auth_min: 15
+http_proxy: ""
+language: en
+theme: auto
+
+dns:
+  bind_hosts:
+    - 0.0.0.0
+  port: 53
+  anonymize_client_ip: false
+  protection_enabled: true
+  blocking_mode: default
+  blocking_ipv4: ""
+  blocking_ipv6: ""
+  blocked_response_ttl: 10
+  parental_block_host: parental-block.adguard.org
+  safebrowsing_block_host: standard-block.adguard.org
+  ratelimit: 0
+  ratelimit_whitelist: []
+  refuse_any: true
+
+  # Upstream DNS servers (Encrypted DNS via DoH / DoT)
+  upstream_dns:
+    - https://dns.quad9.net/dns-query
+    - https://cloudflare-dns.com/dns-query
+    - tls://dns.quad9.net
+  upstream_dns_file: ""
+  bootstrap_dns:
+    - 9.9.9.9
+    - 1.1.1.1
+  fallback_dns:
+    - 1.1.1.1
+    - 8.8.8.8
+
+  all_servers: false
+  fastest_addr: true
+  cache_size: 4194304
+  cache_ttl_min: 300
+  cache_ttl_max: 86400
+  cache_optimistic: true
+
+# Pre-configured recommended blocklists
+filters:
+  - enabled: true
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt
+    name: AdGuard DNS filter
+    id: 1
+  - enabled: true
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_2.txt
+    name: AdAway Default Blocklist
+    id: 2
